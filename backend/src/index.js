@@ -1,6 +1,7 @@
 import express from "express"; //Core framework for handling HTTP requests,routing,middleware, etc.
 import dotenv from "dotenv"; //Loads the dotenv package.
 import { connectDB } from "./lib/db.js";
+import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.route.js";
 
@@ -10,6 +11,7 @@ const app = express();
 const PORT = process.env.PORT;
 
 app.use(express.json()); //middleware that parses JSON bodies of incoming requests and attaches them to req.body
+app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 
 app.listen(PORT, () => {
