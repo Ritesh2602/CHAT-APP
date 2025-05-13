@@ -23,7 +23,7 @@ app.use(
 app.use(express.json({ limit: "50mb" })); //middleware that parses JSON bodies of incoming requests and attaches them to req.body
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
-app.use("/api/message", messageRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.get("/api/cors-test", (req, res) => {
   res.json({ message: "CORS test successful" });
