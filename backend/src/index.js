@@ -6,9 +6,9 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
+import { app, server } from "./lib/socket.js";
 
 dotenv.config(); //Loads .env file contents into process.env.
-const app = express();
 
 const PORT = process.env.PORT;
 app.use(
@@ -29,7 +29,7 @@ app.get("/api/cors-test", (req, res) => {
   res.json({ message: "CORS test successful" });
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log("Server is running on PORT:" + PORT);
   connectDB();
 });

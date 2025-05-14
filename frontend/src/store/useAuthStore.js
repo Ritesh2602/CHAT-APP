@@ -1,7 +1,11 @@
 //State management library for react.The create function is used to create a new store. A store is essentially an object that holds and manages state in your application.
 import { create } from "zustand";
-import { axiosInstance } from "../lib/axios";
+import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
+import { io } from "socket.io-client";
+
+const BASE_URL = "http://localhost:5001";
+
 export const useAuthStore = create((set, get) => ({
   /*This is the piece of state that will hold the user’s authentication details. Initially, it's set to null, meaning there's no authenticated user by default.*/
   authUser: null,
@@ -10,13 +14,15 @@ export const useAuthStore = create((set, get) => ({
   isSigningUp: false,
   isLoggingIn: false,
   isUpdatingProfile: false,
+  onlineUsers: [],
+  socket: null,
 
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
 
       set({ authUser: res.data });
-      //   get().connectSocket();
+      get().connectSocket();
     } catch (error) {
       console.log("Error in checkAuth:", error);
       set({ authUser: null });
@@ -33,8 +39,8 @@ export const useAuthStore = create((set, get) => ({
       console.log("API response:", res.data); // Debug log
       set({ authUser: res.data });
       toast.success("Account created successfully");
+      get().connectSocket();
       return res.data;
-      // get().connectSocket();
     } catch (error) {
       console.error("Full error object:", error); // Debug log
 
@@ -67,7 +73,7 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.post("/auth/logout");
       set({ authUser: null });
       toast.success("Logged out successfully");
-      // get().disconnectSocket();
+      get().disconnectSocket();
     } catch (error) {
       toast.error(error.response.data.message);
     }
@@ -84,5 +90,24 @@ export const useAuthStore = create((set, get) => ({
     } finally {
       set({ isUpdatingProfile: false });
     }
+  },
+  connectSocket: () => {
+    const { authUser } = get();
+    if (!authUser || get().socket?.connected) return;
+
+    const socket = io(BASE_URL, {
+      query: {
+        userId: authUser._id,
+      },
+    });
+
+    set({ socket: socket });
+
+    socket.on("getOnlineUsers", (userIds) => {
+      set({ onlineUsers: userIds });
+    });
+  },
+  disconnectSocket: () => {
+    if (get().socket?.connected) get().socket.disconnect();
   },
 }));

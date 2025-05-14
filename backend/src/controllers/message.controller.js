@@ -1,6 +1,8 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+
 import cloudinary from "../lib/cloudinary.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -16,14 +18,12 @@ export const getUsersForSidebar = async (req, res) => {
   }
 };
 
-//This function, getMessages, is a controller used to fetch all chat messages between two users in a messaging app.
 export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
 
     const messages = await Message.find({
-      //$or allows us to match either of the two conditions.
       $or: [
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
@@ -37,7 +37,6 @@ export const getMessages = async (req, res) => {
   }
 };
 
-//This function handles sending messages between users, supporting both text and image content, with optional real-time notifications.
 export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
@@ -58,12 +57,12 @@ export const sendMessage = async (req, res) => {
       image: imageUrl,
     });
 
-    await newMessage.save(); //saving the message to db
+    await newMessage.save();
 
-    //   const receiverSocketId = getReceiverSocketId(receiverId);
-    //   if (receiverSocketId) {
-    //     io.to(receiverSocketId).emit("newMessage", newMessage);
-    //   }
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {
